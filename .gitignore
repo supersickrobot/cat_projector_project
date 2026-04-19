@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# Generated assets (large files — regenerate with scripts)
+assets/frames/
+assets/corrected_frames/
+assets/videos/
+assets/test_grid_*.png
+
+# Reference files
+refernce criteria.mp4
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp/experiment files
+make_preview.py
