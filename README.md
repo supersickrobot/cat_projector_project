@@ -1,28 +1,21 @@
 # Cat Projector Project 🐱🐟
 
-A Raspberry Pi-powered cat toy that projects animated fish shadows onto the floor for cats to chase. Uses an RCA RPJ227 projector mounted on a shelf, angled ~30° downward.
+A phone-controlled cat toy. A projector sits on a shelf and projects realistic swimming fish shadows onto the floor. You turn it on and off from your phone using Telegram — just open the chat and type "on" or "off".
+
+The fish look real: they swim with body waves, coast between tail wag bursts, curve their bodies to steer, and spread naturally across the floor. Built with a Raspberry Pi, a cheap projector, and a free Telegram bot.
+
+## How It Works
+
+1. **Projector on a shelf** — An RCA RPJ227 projector points down at ~30° from a shelf. A Raspberry Pi drives it over HDMI.
+2. **Fish animation** — The Pi plays a looping video of 20 black koi fish shadows swimming on a white background. The video has keystone correction baked in so the fish look flat on the floor despite the angled projector.
+3. **Phone control** — A Telegram bot runs on the Pi. You text "on" to start the fish, "off" to stop them. No app to install beyond Telegram, no monthly fees, works from anywhere with internet.
 
 ## Hardware
 
-- **Projector**: RCA RPJ227 (800×480, HDMI input)
+- **Projector**: RCA RPJ227 (800×480, HDMI)
 - **Computer**: Raspberry Pi 4 Model B
-- **Mount**: Shelf-mounted, pointing down at ~30° angle
+- **Mount**: Shelf-mounted, angled ~30° downward
 - **Connection**: HDMI from Pi to projector
-
-## What It Does
-
-Generates a looping video of black koi fish shadows swimming across a white background. The fish use a biomechanically accurate locomotion model (based on Tu & Terzopoulos, 1994 "Artificial Fishes") with:
-
-- **Traveling body wave** — sine wave propagates head-to-tail with quadratic amplitude envelope
-- **Thrust from tail wag** — speed comes from tail oscillation, fish coast between bursts
-- **Body curvature steering** — heading change is derived from body bend × speed
-- **Space-seeking waypoints** — fish naturally spread across the canvas, targeting emptier areas
-- **Intermittent burst envelope** — alternating active swimming and coasting phases
-- **V-shaped tail fins** — coupled to the body wave
-
-The video includes a 30° keystone pre-correction so it projects flat on the floor despite the angled projector.
-
-You control it from your phone via a **Telegram bot** — send "on" to start, "off" to stop.
 
 ## Project Structure
 
