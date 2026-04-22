@@ -32,11 +32,14 @@ VIDEOS_DIR = os.path.join(ASSETS_DIR, "videos")
 # On the Pi, videos live here
 PI_VIDEOS_DIR = os.path.expanduser("~/cat_project/videos")
 
-# --- Twilio / WhatsApp ---
-# Set these via environment variables or edit directly
+# --- Telegram Bot ---
+# Get a token from @BotFather on Telegram
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
+
+# --- Twilio / WhatsApp (legacy, keeping for reference) ---
 TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "YOUR_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "YOUR_AUTH_TOKEN")
-TWILIO_WHATSAPP_NUMBER = os.environ.get("TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886")  # Twilio sandbox default
+TWILIO_WHATSAPP_NUMBER = os.environ.get("TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886")
 
 # --- Playback ---
 # VLC is the default player on Raspberry Pi OS

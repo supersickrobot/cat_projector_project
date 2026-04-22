@@ -4,6 +4,9 @@ Pillow>=10.0
 opencv-python>=4.8
 numpy>=1.24
 
-# For Raspberry Pi (playback + WhatsApp bot):
-flask>=3.0
-twilio>=9.0
+# For Raspberry Pi (playback + Telegram bot):
+python-telegram-bot>=21.0
+
+# Legacy (WhatsApp/Twilio — optional):
+# flask>=3.0
+# twilio>=9.0
