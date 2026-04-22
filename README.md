@@ -7,19 +7,22 @@ A Raspberry Pi-powered cat toy that projects animated fish shadows onto the floo
 - **Projector**: RCA RPJ227 (800×480, HDMI input)
 - **Computer**: Raspberry Pi 4 Model B
 - **Mount**: Shelf-mounted, pointing down at ~30° angle
+- **Connection**: HDMI from Pi to projector
 
 ## What It Does
 
-Generates looping video of black koi fish shadows swimming on a white background. The fish use a biomechanically accurate locomotion model (based on Tu & Terzopoulos, 1994 "Artificial Fishes") with:
+Generates a looping video of black koi fish shadows swimming across a white background. The fish use a biomechanically accurate locomotion model (based on Tu & Terzopoulos, 1994 "Artificial Fishes") with:
 
 - **Traveling body wave** — sine wave propagates head-to-tail with quadratic amplitude envelope
 - **Thrust from tail wag** — speed comes from tail oscillation, fish coast between bursts
-- **Body curvature steering** — heading change is derived from body bend × speed (fish can only turn as fast as their body curves)
+- **Body curvature steering** — heading change is derived from body bend × speed
 - **Space-seeking waypoints** — fish naturally spread across the canvas, targeting emptier areas
 - **Intermittent burst envelope** — alternating active swimming and coasting phases
 - **V-shaped tail fins** — coupled to the body wave
 
 The video includes a 30° keystone pre-correction so it projects flat on the floor despite the angled projector.
+
+You control it from your phone via a **Telegram bot** — send "on" to start, "off" to stop.
 
 ## Project Structure
 
@@ -31,16 +34,20 @@ cat_project/
 ├── apply_keystone_correction.py # 30° perspective pre-warp for angled projection
 ├── export_video.py              # Full pipeline: render → keystone correct → encode H.264
 ├── playback_controller.py       # VLC-based fullscreen looping playback for Pi
-├── whatsapp_bot.py              # Twilio WhatsApp bot for remote on/off/scene control
+├── telegram_bot.py              # Telegram bot for remote on/off control
 ├── setup_pi.sh                  # Raspberry Pi deployment script
 ├── requirements.txt             # Python dependencies
 └── assets/
-    └── videos/                  # Generated video files
+    └── videos/                  # Generated video files (gitignored)
 ```
 
-## Quick Start (Development on PC)
+## Quick Start (Generate Videos on PC)
 
 ```bash
+# Clone the repo
+git clone https://github.com/supersickrobot/cat_projector_project.git
+cd cat_projector_project
+
 # Install dependencies
 pip install pillow opencv-python numpy
 
@@ -51,53 +58,108 @@ python -c "from quick_preview import render_quick_preview; render_quick_preview(
 python -c "from quick_preview import render_quick_preview; render_quick_preview(180)"
 ```
 
+## Telegram Bot Setup
+
+The projector is controlled remotely via a free Telegram bot. No monthly costs, no phone number needed, no public URL/ngrok required.
+
+### 1. Create Your Bot (30 seconds)
+
+1. Open **Telegram** on your phone
+2. Search for **@BotFather** and start a chat
+3. Send `/newbot`
+4. Choose a name (e.g. "Cat Projector")
+5. Choose a username (e.g. `my_cat_projector_bot` — must end in `bot`)
+6. BotFather replies with your **bot token** — copy it
+
+### 2. Run the Bot
+
+```bash
+# Set your token as an environment variable (don't commit it!)
+export TELEGRAM_BOT_TOKEN="your_token_here"
+
+# Start the bot
+python telegram_bot.py
+```
+
+### 3. Use It
+
+Open your bot in Telegram and send:
+
+| Message | What it does |
+|---------|-------------|
+| `on` | Start the fish animation |
+| `off` | Stop playback |
+| `status` | Check what's playing |
+| `help` | Show available commands |
+
+### Security (Optional)
+
+When you first message the bot, it shows your Telegram user ID. To restrict the bot to only your account, add your ID to `ALLOWED_USER_IDS` in `telegram_bot.py`:
+
+```python
+ALLOWED_USER_IDS = [123456789]  # your Telegram user ID
+```
+
 ## Configuration
 
-All parameters are in `config.py`:
+All animation parameters are in `config.py`:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `FISH_COUNT` | 20 | Number of fish |
 | `FISH_MIN_SPEED` | 45 | Minimum speed (px/s) |
 | `FISH_MAX_SPEED` | 90 | Maximum speed (px/s) |
-| `FISH_MIN_SIZE` | 40 | Smallest fish (px) |
-| `FISH_MAX_SIZE` | 65 | Largest fish (px) |
+| `FISH_MIN_SIZE` | 40 | Smallest fish body length (px) |
+| `FISH_MAX_SIZE` | 65 | Largest fish body length (px) |
 | `ANIMATION_DURATION_SECONDS` | 180 | Loop length (3 min) |
-| `PROJECTION_ANGLE_DEGREES` | 30.0 | Projector tilt angle |
+| `PROJECTION_ANGLE_DEGREES` | 30.0 | Projector tilt from horizontal |
 
 ## Raspberry Pi Deployment
 
 ```bash
-# On the Pi:
+# On the Pi — clone and set up
+git clone https://github.com/supersickrobot/cat_projector_project.git
+cd cat_projector_project
 chmod +x setup_pi.sh
 ./setup_pi.sh
-
-# Set Twilio env vars for WhatsApp control:
-export TWILIO_ACCOUNT_SID="your_sid"
-export TWILIO_AUTH_TOKEN="your_token"
-export TWILIO_WHATSAPP_NUMBER="whatsapp:+1234567890"
 ```
 
-The setup script installs dependencies, copies videos, and creates systemd services for:
-- **Auto-start video playback** on boot (fullscreen VLC loop)
-- **WhatsApp bot** for remote control
+The setup script:
+1. Installs VLC, Python dependencies, and `python-telegram-bot`
+2. Copies generated videos to `~/cat_project/videos/`
+3. Creates systemd services for auto-start on boot:
+   - **Video playback** — fullscreen VLC loop
+   - **Telegram bot** — listens for on/off commands
 
-## WhatsApp Commands
+Set your bot token on the Pi:
+```bash
+# Add to ~/.bashrc or /etc/environment for persistence
+export TELEGRAM_BOT_TOKEN="your_token_here"
+```
 
-Send these messages to the Twilio WhatsApp number:
-- `off` — Stop playback
-- `fish` — Start/restart fish animation
-- `status` — Check if playing
+## Export Pipeline (Full Quality for Pi)
 
-## Export Pipeline (Full Quality)
-
-For Pi-ready H.264 video with keystone correction:
+For a Pi-ready H.264 video with keystone correction baked in:
 
 ```bash
 python export_video.py
 ```
 
-This renders all frames → applies 30° perspective warp → encodes to compact H.264 MP4.
+This renders all frames → applies the 30° perspective warp → encodes to a compact H.264 MP4.
+
+## How the Fish Work
+
+The animation is based on the **Tu & Terzopoulos (1994)** "Artificial Fishes" locomotion model:
+
+1. **Body wave**: A sine wave travels from head to tail. Amplitude increases quadratically — the head barely moves, the tail swings wide. This is how real fish swim.
+
+2. **Thrust**: Forward speed comes from tail oscillation. During active wag bursts the fish accelerates; between bursts it coasts and slows (bounded to 45–90 px/s).
+
+3. **Steering**: The body physically curves to turn. The heading change rate equals `body_curvature × speed / body_length`. A slow fish with a curved body turns slowly. A fast fish with the same curve turns faster. The body curvature smoothly tracks a desired turn angle (muscle response lag).
+
+4. **Waypoints**: Each fish picks random target points to swim toward. Candidates are scored by distance from other fish — the emptiest spot wins. This creates natural spreading without hard repulsion.
+
+5. **Burst envelope**: A low-frequency oscillator modulates the tail wag amplitude, creating intermittent swimming — active bursts followed by coasting — which looks much more natural than constant swimming.
 
 ## License
 
