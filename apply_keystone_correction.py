@@ -37,8 +37,8 @@ def compute_keystone_correction_matrix(width, height, angle_degrees):
     # We compute the trapezoid the image would project as, then map our rectangle into the
     # inverse trapezoid.
 
-    # Vertical FOV approximation for the RPJ227 (roughly 30 degrees total vertical FOV)
-    vertical_fov_degrees = 28.0
+    # Vertical FOV approximation for the RPJ227 (configurable via config)
+    vertical_fov_degrees = getattr(config, "PROJECTION_VERTICAL_FOV_DEGREES", 28.0)
     half_vertical_fov = math.radians(vertical_fov_degrees / 2.0)
 
     # Top and bottom ray angles from horizontal
@@ -53,6 +53,13 @@ def compute_keystone_correction_matrix(width, height, angle_degrees):
 
     # Ratio: how much wider the bottom is compared to the top in the projected image
     width_ratio = bottom_distance / top_distance
+
+    # Optional empirical override - bypass the trig and use a measured ratio directly
+    override = getattr(config, "KEYSTONE_WIDTH_RATIO_OVERRIDE", None)
+    if override is not None and override > 0:
+        print(f"  Using KEYSTONE_WIDTH_RATIO_OVERRIDE = {override} (ignoring angle math)")
+        width_ratio = float(override)
+
 
     # To cancel this, we need the INVERSE: make the top wider and bottom narrower in the source
     # The correction narrows the bottom by this ratio (or equivalently widens the top)
@@ -69,13 +76,25 @@ def compute_keystone_correction_matrix(width, height, angle_degrees):
     ])
 
     # Destination corners (the pre-warped trapezoid)
-    # Top stays full width, bottom gets narrower (inset from both sides)
-    destination_corners = np.float32([
-        [0, 0],                              # top-left (unchanged)
-        [width, 0],                          # top-right (unchanged)
-        [width - bottom_inset, height],      # bottom-right (moved inward)
-        [bottom_inset, height],              # bottom-left (moved inward)
-    ])
+    # Default: top stays full width, bottom is narrower (top of source = close edge on floor).
+    # If KEYSTONE_INVERT is True, flip vertically: bottom stays full width, top is narrower
+    # (bottom of source = close edge on floor).
+    invert = getattr(config, "KEYSTONE_INVERT", False)
+    if not invert:
+        destination_corners = np.float32([
+            [0, 0],                              # top-left (unchanged)
+            [width, 0],                          # top-right (unchanged)
+            [width - bottom_inset, height],      # bottom-right (moved inward)
+            [bottom_inset, height],              # bottom-left (moved inward)
+        ])
+    else:
+        destination_corners = np.float32([
+            [bottom_inset, 0],                   # top-left (moved inward)
+            [width - bottom_inset, 0],           # top-right (moved inward)
+            [width, height],                     # bottom-right (unchanged)
+            [0, height],                         # bottom-left (unchanged)
+        ])
+
 
     # Compute the perspective transform
     correction_matrix = cv2.getPerspectiveTransform(source_corners, destination_corners)

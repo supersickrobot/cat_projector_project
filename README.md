@@ -25,7 +25,9 @@ cat_project/
 ├── generate_fish_animation.py   # Core fish animation engine (KoiFish class)
 ├── quick_preview.py             # Fast preview render (direct to MP4)
 ├── apply_keystone_correction.py # 30° perspective pre-warp for angled projection
+├── calibration_image.py         # Generate fullscreen alignment grid for projector setup
 ├── export_video.py              # Full pipeline: render → keystone correct → encode H.264
+
 ├── playback_controller.py       # VLC-based fullscreen looping playback for Pi
 ├── telegram_bot.py              # Telegram bot for remote on/off control
 ├── setup_pi.sh                  # Raspberry Pi deployment script
@@ -106,8 +108,33 @@ All animation parameters are in `config.py`:
 | `FISH_MAX_SIZE` | 65 | Largest fish body length (px) |
 | `ANIMATION_DURATION_SECONDS` | 180 | Loop length (3 min) |
 | `PROJECTION_ANGLE_DEGREES` | 30.0 | Projector tilt from horizontal |
+| `PROJECTION_VERTICAL_FOV_DEGREES` | 28.0 | Approximate vertical FOV of the projector lens |
+| `KEYSTONE_INVERT` | False | Flip top↔bottom on keystone correction (use if your projector orientation makes the bottom of the source the close edge on the floor) |
+| `KEYSTONE_WIDTH_RATIO_OVERRIDE` | None | Bypass the angle math with a measured ratio. Set to `1.0` to disable keystone entirely and get **natural perspective** (fish small near, large far) |
+
+## Calibration
+
+A simple way to align the projector and tune the keystone:
+
+```bash
+# Generate a 1920×1080 calibration image with edge arrows + corner markers
+python3 calibration_image.py
+
+# Project it fullscreen
+vlc --fullscreen --no-osd --intf dummy --image-duration=-1 --loop \
+    assets/videos/calibration.png
+```
+
+Then measure the projected widths on the floor at the top edge and bottom
+edge. The ratio top:bottom tells you the residual perspective distortion;
+plug numbers into `PROJECTION_ANGLE_DEGREES` (or `KEYSTONE_WIDTH_RATIO_OVERRIDE`)
+and re-render.
+
+For a real-world deployment example with measured numbers, see
+[`DEPLOYMENT_NOTES.md`](DEPLOYMENT_NOTES.md).
 
 ## Raspberry Pi Deployment
+
 
 ```bash
 # On the Pi — clone and set up

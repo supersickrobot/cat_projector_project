@@ -8,7 +8,28 @@ PROJECTOR_ASPECT_RATIO = PROJECTOR_WIDTH / PROJECTOR_HEIGHT
 
 # --- Projection Geometry ---
 # Angle in degrees from horizontal (projector pointing down from shelf)
-PROJECTION_ANGLE_DEGREES = 30.0
+# Calibrated empirically from measured floor widths (84" top / 64" bottom) -> ~25°.
+PROJECTION_ANGLE_DEGREES = 25.0
+# Approximate vertical field-of-view of the projector lens (degrees). Used to estimate
+# how much the top/bottom rays diverge.
+PROJECTION_VERTICAL_FOV_DEGREES = 28.0
+# If True, flip the keystone correction (top↔bottom). Use this when the projector's
+# image is mounted/oriented such that the BOTTOM of the source frame ends up as the
+# close (short-throw) edge on the floor instead of the top.
+KEYSTONE_INVERT = True
+# If set (not None), this value is used directly as the floor width ratio instead of
+# computing it from PROJECTION_ANGLE_DEGREES. Handy for iterative empirical tuning:
+#   ratio = (measured floor width at FAR/wide edge) / (measured floor width at CLOSE/narrow edge)
+# Example: floor measured 84" top, 64" bottom -> 84/64 = 1.3125 if measurements were taken
+# with NO correction applied. If taken WITH the current correction in place, multiply by
+# (current_far_source_width / current_close_source_width) to back out the physical ratio.
+# Setting this to 1.0 produces NO pre-warp (identity transform). Use this if you want
+# the natural perspective look — fish near the projector appear small, fish at the far
+# edge appear large (depth illusion). Set to None to use angle-based correction.
+KEYSTONE_WIDTH_RATIO_OVERRIDE = 1.0
+
+
+
 
 # --- Animation Settings ---
 ANIMATION_FPS = 30
